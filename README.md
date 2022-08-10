@@ -1,6 +1,6 @@
 # Yelp-App
 
-An iOS application similar to yelp that allows users to find resturants and city sights near their current location via yelp API.
+An iOS application similar to yelp that allows users to find restaurants and city sights near their current location via yelp API.
 
 # What I Learned
 
