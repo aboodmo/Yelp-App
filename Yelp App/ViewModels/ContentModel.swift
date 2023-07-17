@@ -12,6 +12,9 @@ class ContentModel: NSObject, CLLocationManagerDelegate, ObservableObject {
     
     var locationManager = CLLocationManager()
     
+    @Published var resturaunts = [Business]()
+    @Published var sights = [Business]()
+    
     override init() {
         super.init()
         
@@ -48,7 +51,8 @@ class ContentModel: NSObject, CLLocationManagerDelegate, ObservableObject {
             
             locationManager.startUpdatingLocation()
             
-            getBuisnesses(category: "resturants", location: userlocation!)
+            getBuisnesses(category: Constants.sightsKey, location: userlocation!)
+            getBuisnesses(category: Constants.resturantsKey, location: userlocation!)
         }
     }
     
@@ -57,7 +61,7 @@ class ContentModel: NSObject, CLLocationManagerDelegate, ObservableObject {
         // Create URL
         
         
-        var urlComponents = URLComponents(string: "https://api.yelp.com/v3/businesses/search")
+        var urlComponents = URLComponents(string: Constants.apiUrl)
         urlComponents?.queryItems = [
             URLQueryItem(name: "latitude", value: String(location.coordinate.latitude)),
             URLQueryItem(name: "longitude", value: String(location.coordinate.longitude)),
@@ -71,7 +75,7 @@ class ContentModel: NSObject, CLLocationManagerDelegate, ObservableObject {
             // Create URL Request
             var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10.0)
             request.httpMethod = "GET"
-            request.addValue("Bearer Ckeb7zKUslUk99eDlocPIiaIR-eAu-2j-2NhNTirBkRgMvQ-NFHiNarl6JDZ9L_zCqX1y-6r6wbckN09ZSrKgmj42FemiAZpuuKYWD0PhVvk7-RcDh0cgbfqxoC0ZHYx", forHTTPHeaderField: "Authorization")
+            request.addValue("Bearer \(Constants.apiKey)", forHTTPHeaderField: "Authorization")
             
             // Get URLSession
             let session = URLSession.shared
@@ -80,7 +84,30 @@ class ContentModel: NSObject, CLLocationManagerDelegate, ObservableObject {
             // Create Data Task
             let dataTask = session.dataTask(with: request) { data, response, error in
                 if error == nil {
-                    print(response)
+                    
+                    do{
+                        // parse json
+                        let decoder = JSONDecoder()
+                        let result = try decoder.decode(BusinessSearch.self, from: data!)
+                        
+                        DispatchQueue.main.async {
+                            // Assign results to coresponding properties
+                            switch category {
+                            case Constants.sightsKey:
+                                self.sights = result.businesses
+                            case Constants.resturantsKey:
+                                self.resturaunts = result.businesses
+                            default:
+                                break
+                            }
+                        }
+                        
+                        
+                    }
+                    catch{
+                        print(error)
+                    }
+                    
                 }
             }
             
